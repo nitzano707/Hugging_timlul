@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תמלול קובץ אודיו</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        #uploadForm {
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>תמלול קובץ אודיו</h1>
+    <div id="uploadForm">
+        <input type="file" id="audioFile" accept="audio/*">
+        <br>
+        <button onclick="transcribeAudio()">התחל תמלול</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        async function transcribeAudio() {
+            const audioFile = document.getElementById('audioFile').files[0];
+            if (!audioFile) {
+                alert('אנא בחר קובץ אודיו לתמלול.');
+                return;
+            }
+
+            // הצגת הודעה על תהליך תמלול
+            document.getElementById('result').textContent = 'מתחיל תמלול, אנא המתן...';
+
+            const formData = new FormData();
+            formData.append('file', audioFile);
+
+            try {
+                const response = await fetch('https://api-inference.huggingface.co/models/ivrit-ai/whisper-v2-d3-e3', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('huggingFaceApiKey')}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('result').textContent = data.text;
+                } else {
+                    const errorText = await response.text();
+                    document.getElementById('result').textContent = 'שגיאה בתמלול: ' + errorText;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'שגיאה בתהליך התמלול, אנא נסה שנית.';
+            }
+        }
+    </script>
+</body>
+</html>
